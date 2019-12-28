@@ -72,7 +72,7 @@ public class RedisCacheAspect {
             if (helper.isNullResult(resultAfterRun)) {
                 return;
             }
-            cacheService.insert2Redis(cacheKey, resultAfterRun, cacheInfo.getExpireTime(), cacheInfo.getCacheName());
+            cacheService.insert2Redis(cacheKey, resultAfterRun, cacheInfo.getExpireTime(), cacheName);
             log.info("方法 {} 结果集已写入Redis：\n{}", methodName,
                     helper.buildLogInfo(methodName, cacheName, cacheKey, params));
         });

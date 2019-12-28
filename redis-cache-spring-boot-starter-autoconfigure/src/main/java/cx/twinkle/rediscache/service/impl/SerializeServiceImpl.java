@@ -60,7 +60,6 @@ public class SerializeServiceImpl implements SerializeService {
         return Arrays.toString(serializedBytes);
     }
 
-
     @Override
     public Object deserialize(String str) {
         if (StringUtils.isEmpty(str)) {

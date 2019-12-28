@@ -1,5 +1,7 @@
 package cx.twinkle.rediscache.service.task;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
@@ -11,6 +13,7 @@ import java.util.Set;
  * @version 2019/12/28 16:53
  */
 public class CacheHolder {
+    private static final Logger log = LoggerFactory.getLogger(CacheHolder.class);
     /**
      * 运行时 记录缓存Key的 集合
      */
@@ -26,6 +29,7 @@ public class CacheHolder {
         }
         Set<String> resultSet = new HashSet<>(RUNTIME_CACHE_NAME_SET);
         RUNTIME_CACHE_NAME_SET.clear();
+        log.info("CacheHolder清理完毕！");
         return resultSet;
     }
 }

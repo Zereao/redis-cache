@@ -13,7 +13,9 @@ public class CustomRedisCacheConfig {
      * 就对参数进行MD5摘要，防止缓存Key过长
      */
     private Integer maxParamNum = 5;
-
+    /**
+     * 自定义 清理CacheKeySet CacheNameHash 的任务执行时间，默认：每天00:10
+     */
     private String cleanTaskCron = "0 10 0 * * ?";
 
     public Integer getMaxParamNum() {

@@ -7,8 +7,8 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 
 /**
- * @author 何雨伦
- * @version 2019/9/11 19:55
+ * @author twinkle
+ * @version 2019/12/28 22:37
  */
 @Configuration
 public class CacheSerializerConfig {

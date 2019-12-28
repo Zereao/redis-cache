@@ -17,8 +17,6 @@ public @interface CacheEvict {
 
     /**
      * 缓存名称
-     *
-     * 当 类上标注有
      */
     String cache() default "";
 

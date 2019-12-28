@@ -1,6 +1,5 @@
 package cx.twinkle.rediscache.service;
 
-import java.lang.reflect.Method;
 import java.time.Duration;
 
 /**

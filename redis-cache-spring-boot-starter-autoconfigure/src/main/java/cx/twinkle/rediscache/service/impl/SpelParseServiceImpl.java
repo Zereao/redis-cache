@@ -10,7 +10,6 @@ import org.springframework.expression.ParserContext;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
@@ -19,7 +18,6 @@ import java.lang.reflect.Method;
  * @author twinkle
  * @version 2019/12/28 11:25
  */
-@Service("SpelParseService")
 public class SpelParseServiceImpl implements SpelParseService, BeanFactoryAware {
     @Resource
     private SpelExpressionParser spelExpressionParser;

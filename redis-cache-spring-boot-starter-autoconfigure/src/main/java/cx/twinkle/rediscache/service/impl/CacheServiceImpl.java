@@ -38,7 +38,7 @@ public class CacheServiceImpl implements CacheService {
     /**
      * 用于存储每个CacheKey 对应的 CacheName，使用一个Hash存储，下面就是Hash的key
      */
-    private static final String CACHE_NAME_OF_KEY_HASH_KEY = "C7264226X_CACHE_NAME_OF_KEY_HASH";
+    public static final String CACHE_NAME_OF_KEY_HASH_KEY = "C7264226X_CACHE_NAME_OF_KEY_HASH";
 
     @Override
     public String generateCacheKey(String cacheName, String methodName, Object... params) {
@@ -50,7 +50,7 @@ public class CacheServiceImpl implements CacheService {
         keyBuilder.append("-");
         Integer maxParamNum = customRedisCacheConfig.getMaxParamNum();
         if (params.length > maxParamNum) {
-            log.info("获取缓存key，方法 {} 的参数个数大于5个，采用MD5摘要~", methodName);
+            log.info("获取缓存key，方法 {} 的参数个数大于【{}】个，采用MD5摘要~", methodName, maxParamNum);
             String paramMd5 = DigestUtils.md5DigestAsHex(Arrays.toString(params).getBytes());
             keyBuilder.append(paramMd5);
             return keyBuilder.toString();
@@ -94,7 +94,7 @@ public class CacheServiceImpl implements CacheService {
     public void deleteByKey(String... keys) {
         for (String key : keys) {
             redisTemplate.delete(key);
-            String cacheName = String.valueOf(redisTemplate.opsForHash().get(CACHE_NAME_OF_KEY_HASH_KEY, key));
+            Object cacheName = redisTemplate.opsForHash().get(CACHE_NAME_OF_KEY_HASH_KEY, key);
             String keySetKey = CACHE_KEY_SET_PREFIX + cacheName;
             redisTemplate.opsForSet().remove(keySetKey, key);
         }
