@@ -36,12 +36,12 @@ public class CacheCleanTask {
     }
 
     public void cleanCache() {
+        log.info("******* 准备开始清理 KeySet、CacheNameHash~ *******");
         Set<String> cacheNameSet = CacheHolder.getAndClear();
-        if (CollectionUtils.isEmpty(cacheNameSet)) {
-            return;
-        }
-        for (String cacheNameKey : cacheNameSet) {
-            stringRedisTemplate.delete(cacheNameKey);
+        if (!CollectionUtils.isEmpty(cacheNameSet)) {
+            for (String cacheNameKey : cacheNameSet) {
+                stringRedisTemplate.delete(cacheNameKey);
+            }
         }
         stringRedisTemplate.delete(CACHE_NAME_OF_KEY_HASH_KEY);
         log.info("Redis缓存 KeySet、CacheNameHash清理 定时任务执行完毕！相关缓存清理成功！");
