@@ -20,7 +20,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
  * @version 2019/12/27 16:09
  */
 @Configuration
-@EnableConfigurationProperties({CustomRedisCacheConfig.class})
+@EnableConfigurationProperties({CustomCacheConfig.class})
 @Import({CacheSerializerConfig.class, TaskSchedulerConfig.class})
 public class RedisCacheBeanAutoconfigure {
     @Bean
@@ -34,13 +34,11 @@ public class RedisCacheBeanAutoconfigure {
     }
 
     @Bean
-    @ConditionalOnMissingBean(CacheServiceImpl.class)
     public CacheService cacheService() {
         return new CacheServiceImpl();
     }
 
     @Bean
-    @ConditionalOnMissingBean(SerializeServiceImpl.class)
     public SerializeService serializeService() {
         return new SerializeServiceImpl();
     }
@@ -52,7 +50,6 @@ public class RedisCacheBeanAutoconfigure {
     }
 
     @Bean
-    @ConditionalOnMissingBean(SpelParseServiceImpl.class)
     public SpelParseService spelParseService() {
         return new SpelParseServiceImpl();
     }

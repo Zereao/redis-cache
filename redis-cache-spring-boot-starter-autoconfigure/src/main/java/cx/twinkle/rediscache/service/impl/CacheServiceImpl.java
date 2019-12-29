@@ -1,6 +1,6 @@
 package cx.twinkle.rediscache.service.impl;
 
-import cx.twinkle.rediscache.config.CustomRedisCacheConfig;
+import cx.twinkle.rediscache.config.CustomCacheConfig;
 import cx.twinkle.rediscache.service.CacheService;
 import cx.twinkle.rediscache.service.SerializeService;
 import cx.twinkle.rediscache.service.task.CacheHolder;
@@ -29,7 +29,7 @@ public class CacheServiceImpl implements CacheService {
     @Resource
     private SerializeService serializeService;
     @Resource
-    private CustomRedisCacheConfig customRedisCacheConfig;
+    private CustomCacheConfig customCacheConfig;
 
     /**
      * 用于存储每个Cache的key
@@ -48,7 +48,7 @@ public class CacheServiceImpl implements CacheService {
             return keyBuilder.toString();
         }
         keyBuilder.append("-");
-        Integer maxParamNum = customRedisCacheConfig.getMaxParamNum();
+        Integer maxParamNum = customCacheConfig.getMaxParamNum();
         if (params.length > maxParamNum) {
             log.info("获取缓存key，方法 {} 的参数个数大于【{}】个，采用MD5摘要~", methodName, maxParamNum);
             String paramMd5 = DigestUtils.md5DigestAsHex(Arrays.toString(params).getBytes());

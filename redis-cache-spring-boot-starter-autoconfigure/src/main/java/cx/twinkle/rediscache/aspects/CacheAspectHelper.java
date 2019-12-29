@@ -90,6 +90,7 @@ public class CacheAspectHelper {
             if (CollectionUtils.isEmpty(keyList)) {
                 log.warn("方法 {} 对应的缓存注解解析SPEL表达式得到的数据为空！SPEL = {}", methodName, spel);
             } else {
+                log.info("从SPEL表达式【{}】中解析到KeyList = {}", spel, keyList);
                 return keyList;
             }
         }

@@ -1,6 +1,6 @@
 package cx.twinkle.rediscache.service.task;
 
-import cx.twinkle.rediscache.config.CustomRedisCacheConfig;
+import cx.twinkle.rediscache.config.CustomCacheConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -26,11 +26,11 @@ public class CacheCleanTask {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
     @Resource
-    private CustomRedisCacheConfig customRedisCacheConfig;
+    private CustomCacheConfig customCacheConfig;
 
     @PostConstruct
     public void run() {
-        String cron = customRedisCacheConfig.getCleanTaskCron();
+        String cron = customCacheConfig.getCleanTaskCron();
         taskScheduler.schedule(this::cleanCache, new CronTrigger(cron));
         log.info("Redis缓存 KeySet、CacheNameHash清理 定时任务注册成功！cron = {}", cron);
     }

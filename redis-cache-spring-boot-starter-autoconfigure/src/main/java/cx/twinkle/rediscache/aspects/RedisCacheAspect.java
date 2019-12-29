@@ -7,7 +7,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +17,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
+ * AOP核心类，提供方法拦截
+ *
  * @author twinkle
  * @version 2019/12/27 14:50
  */
@@ -31,27 +32,9 @@ public class RedisCacheAspect {
     private CacheAspectHelper helper;
 
     /**
-     * 切点，所有方法
-     */
-    @Pointcut("execution(public * *(..))")
-    public void allPublicMethods() {}
-
-    /**
-     * 切点，被 @Cacheable 标注的所有方法
-     */
-    @Pointcut("@annotation(cx.twinkle.rediscache.annotation.Cacheable)")
-    public void cacheableAnnotated() {}
-
-    /**
-     * 切点，被 @CacheEvict 标注的所有方法
-     */
-    @Pointcut("@annotation(cx.twinkle.rediscache.annotation.CacheEvict)")
-    public void cacheEvictAnnotated() {}
-
-    /**
      * 用于处理 缓存写入、读取
      */
-    @Around("allPublicMethods() && cacheableAnnotated()")
+    @Around("@annotation(cx.twinkle.rediscache.annotation.Cacheable)")
     public Object cacheable(ProceedingJoinPoint pjp) throws Throwable {
         Object[] params = pjp.getArgs();
         Method targetMethod = ((MethodSignature) pjp.getSignature()).getMethod();
@@ -82,7 +65,7 @@ public class RedisCacheAspect {
     /**
      * 用于处理 缓存 过期
      */
-    @Before("allPublicMethods() && cacheEvictAnnotated()")
+    @Before("@annotation(cx.twinkle.rediscache.annotation.CacheEvict)")
     public void cacheEvict(JoinPoint joinPoint) {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         MethodCacheInfo cacheInfo = helper.getCacheInfoWhenEvict(method);

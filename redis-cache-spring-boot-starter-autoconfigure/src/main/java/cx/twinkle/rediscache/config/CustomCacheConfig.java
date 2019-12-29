@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @version 2019/12/28 17:55
  */
 @ConfigurationProperties(prefix = "ct.cache")
-public class CustomRedisCacheConfig {
+public class CustomCacheConfig {
     /**
      * 自定义生成Key时，当犯法的参数个数大于 maxParamNum (默认为5)个时，
      * 就对参数进行MD5摘要，防止缓存Key过长
