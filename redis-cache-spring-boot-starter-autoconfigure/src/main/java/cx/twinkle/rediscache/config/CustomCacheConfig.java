@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ct.cache")
 public class CustomCacheConfig {
     /**
-     * 自定义生成Key时，当犯法的参数个数大于 maxParamNum (默认为5)个时，
+     * 自定义生成Key时，当方法的参数个数大于 maxParamNum (默认为5)个时，
      * 就对参数进行MD5摘要，防止缓存Key过长
      */
     private Integer maxParamNum = 5;
