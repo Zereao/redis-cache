@@ -49,8 +49,8 @@ public class CacheServiceImpl implements CacheService {
         }
         keyBuilder.append("-");
         Integer maxParamNum = customCacheConfig.getMaxParamNum();
-        if (params.length > maxParamNum) {
-            log.info("获取缓存key，方法 {} 的参数个数大于【{}】个，采用MD5摘要~", methodName, maxParamNum);
+        if (this.paramsTooLong(params, maxParamNum)) {
+            log.info("获取缓存key，方法 {} 的参数个数大于【{}】个 或存在集合，采用MD5摘要~", methodName, maxParamNum);
             String paramMd5 = DigestUtils.md5DigestAsHex(Arrays.toString(params).getBytes());
             keyBuilder.append(paramMd5);
             return keyBuilder.toString();
@@ -60,6 +60,18 @@ public class CacheServiceImpl implements CacheService {
             keyBuilder.append(paramStr.replace(":", "-")).append("_");
         }
         return keyBuilder.toString();
+    }
+
+    private boolean paramsTooLong(Object[] params, Integer maxParamNum) {
+        if (params.length > maxParamNum) {
+            return true;
+        }
+        for (Object param : params) {
+            if (param instanceof Iterable || param.getClass().isArray()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
