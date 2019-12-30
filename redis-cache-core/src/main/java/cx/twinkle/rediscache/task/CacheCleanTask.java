@@ -1,6 +1,6 @@
-package cx.twinkle.rediscache.service.task;
+package cx.twinkle.rediscache.task;
 
-import cx.twinkle.rediscache.config.CustomCacheConfig;
+import cx.twinkle.rediscache.cache.CacheHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -9,28 +9,28 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.util.Set;
 
-import static cx.twinkle.rediscache.service.impl.CacheServiceImpl.CACHE_NAME_OF_KEY_HASH_KEY;
+import static cx.twinkle.rediscache.cache.RedisCacheServiceImpl.CACHE_NAME_OF_KEY_HASH_KEY;
 
 /**
  * @author twinkle
- * @version 2019/12/28 16:58
+ * @version 2019/12/30 19:08
  */
 public class CacheCleanTask {
     private static final Logger log = LoggerFactory.getLogger(CacheCleanTask.class);
 
-    @Resource
     private TaskScheduler taskScheduler;
-    @Resource
     private StringRedisTemplate stringRedisTemplate;
-    @Resource
-    private CustomCacheConfig customCacheConfig;
+    private String cron = "0 10 0 * * ?";
+
+    public CacheCleanTask(TaskScheduler taskScheduler, StringRedisTemplate stringRedisTemplate) {
+        this.taskScheduler = taskScheduler;
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
 
     @PostConstruct
     public void run() {
-        String cron = customCacheConfig.getCleanTaskCron();
         taskScheduler.schedule(this::cleanCache, new CronTrigger(cron));
         log.info("Redis缓存 KeySet、CacheNameHash清理 定时任务注册成功！cron = {}", cron);
     }
@@ -45,5 +45,13 @@ public class CacheCleanTask {
         }
         stringRedisTemplate.delete(CACHE_NAME_OF_KEY_HASH_KEY);
         log.info("Redis缓存 KeySet、CacheNameHash清理 定时任务执行完毕！相关缓存清理成功！");
+    }
+
+    public String getCron() {
+        return cron;
+    }
+
+    public void setCron(String cron) {
+        this.cron = cron;
     }
 }

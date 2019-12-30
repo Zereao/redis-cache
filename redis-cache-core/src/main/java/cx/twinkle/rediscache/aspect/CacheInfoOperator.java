@@ -1,18 +1,18 @@
-package cx.twinkle.rediscache.aspects;
+package cx.twinkle.rediscache.aspect;
 
 import cx.twinkle.rediscache.annotation.CacheEvict;
 import cx.twinkle.rediscache.annotation.Cacheable;
 import cx.twinkle.rediscache.annotation.RedisCache;
-import cx.twinkle.rediscache.service.CacheService;
-import cx.twinkle.rediscache.service.SpelParseService;
+import cx.twinkle.rediscache.cache.SpelParser;
+import cx.twinkle.rediscache.dto.MethodCacheInfo;
 import cx.twinkle.rediscache.utils.DurationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.time.Duration;
@@ -27,13 +27,54 @@ import java.util.function.Function;
  * @author twinkle
  * @version 2019/12/27 21:12
  */
-public class CacheAspectHelper {
-    private static final Logger log = LoggerFactory.getLogger(CacheAspectHelper.class);
+public class CacheInfoOperator {
+    private static final Logger log = LoggerFactory.getLogger(CacheInfoOperator.class);
 
-    @Resource
-    private CacheService cacheService;
-    @Resource
-    private SpelParseService spelParseService;
+    private SpelParser spelParser;
+    private Integer maxParamNum = 5;
+
+    public CacheInfoOperator(BeanFactory beanFactory) {
+        this.spelParser = new SpelParser(beanFactory);
+    }
+
+    public String generateCacheKey(String cacheName, String methodName, Object... params) {
+        StringBuilder keyBuilder = new StringBuilder(cacheName).append("::").append(methodName).append("-v1_0");
+        if (params == null || params.length <= 0) {
+            log.debug("获取缓存key，方法 {} 的参数体为空！", methodName);
+            return keyBuilder.toString();
+        }
+        keyBuilder.append("-");
+        if (this.paramsTooLong(params, this.maxParamNum)) {
+            log.info("获取缓存key，方法 {} 的参数个数大于【{}】个 或存在集合，采用MD5摘要~", methodName, this.maxParamNum);
+            String paramMd5 = DigestUtils.md5DigestAsHex(Arrays.toString(params).getBytes());
+            keyBuilder.append(paramMd5);
+            return keyBuilder.toString();
+        }
+        for (Object param : params) {
+            String paramStr = String.valueOf(param);
+            keyBuilder.append(paramStr.replace(":", "-")).append("_");
+        }
+        return keyBuilder.toString();
+    }
+
+    /**
+     * 如果方法参数个数大于 指定个数，或者 参数类型是 集合、数组，则对参数进行MD5摘要
+     *
+     * @param params      参数数组
+     * @param maxParamNum 最大参数个数，默认为 5
+     * @return 是否对参数MD5摘要
+     */
+    private boolean paramsTooLong(Object[] params, Integer maxParamNum) {
+        if (params.length > maxParamNum) {
+            return true;
+        }
+        for (Object param : params) {
+            if (param instanceof Iterable || param instanceof Map || param.getClass().isArray()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     MethodCacheInfo getCacheInfoWhenRead(Method method, Object... params) {
         String methodName = method.getName();
@@ -49,7 +90,7 @@ public class CacheAspectHelper {
             log.debug("从方法 {} 上解析到需要使用缓存Key：{}", methodName, cacheKey);
         } else {
             log.debug("从方法 {} 中解析未解析到 缓存Key！使用默认缓存Key生成策略！", methodName);
-            cacheKey = cacheService.generateCacheKey(cacheName, methodName, params);
+            cacheKey = this.generateCacheKey(cacheName, methodName, params);
         }
         Duration expire = Duration.ZERO;
         String expireTime = this.getValue(method, Cacheable.class, Cacheable::expire, RedisCache::expire);
@@ -86,7 +127,7 @@ public class CacheAspectHelper {
             log.warn("方法 {} 对应的缓存的过期时间为空！", methodName);
         } else {
             @SuppressWarnings("unchecked")
-            List<String> keyList = spelParseService.parse(spel, method, List.class, args);
+            List<String> keyList = spelParser.parse(spel, method, List.class, args);
             if (CollectionUtils.isEmpty(keyList)) {
                 log.warn("方法 {} 对应的缓存注解解析SPEL表达式得到的数据为空！SPEL = {}", methodName, spel);
             } else {
@@ -173,5 +214,13 @@ public class CacheAspectHelper {
                 + "\tredisKey：" + redisKey + ",\n"
                 + "\t请求参数：" + Arrays.toString(params) + ",\n"
                 + "}";
+    }
+
+    public Integer getMaxParamNum() {
+        return maxParamNum;
+    }
+
+    public void setMaxParamNum(Integer maxParamNum) {
+        this.maxParamNum = maxParamNum;
     }
 }

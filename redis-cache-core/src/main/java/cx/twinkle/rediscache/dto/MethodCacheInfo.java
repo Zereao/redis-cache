@@ -1,12 +1,12 @@
-package cx.twinkle.rediscache.aspects;
+package cx.twinkle.rediscache.dto;
 
 import java.time.Duration;
 
 /**
  * @author twinkle
- * @version 2019/12/28 09:43
+ * @version 2019/12/30 19:14
  */
-class MethodCacheInfo {
+public class MethodCacheInfo {
     /**
      * 缓存对应方法的名称
      */

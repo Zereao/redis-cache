@@ -1,36 +1,29 @@
-package cx.twinkle.rediscache.service.impl;
+package cx.twinkle.rediscache.cache;
 
-import cx.twinkle.rediscache.config.CustomCacheConfig;
-import cx.twinkle.rediscache.service.CacheService;
-import cx.twinkle.rediscache.service.SerializeService;
-import cx.twinkle.rediscache.service.task.CacheHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author twinkle
- * @version 2019/12/27 15:04
+ * @version 2019/12/30 18:54
  */
-public class CacheServiceImpl implements CacheService {
-    private static final Logger log = LoggerFactory.getLogger(CacheServiceImpl.class);
+public class RedisCacheServiceImpl implements RedisCacheService {
+    private static final Logger log = LoggerFactory.getLogger(RedisCacheServiceImpl.class);
 
-    @Resource(name = "stringRedisTemplate")
     private StringRedisTemplate redisTemplate;
-    @Resource
     private SerializeService serializeService;
-    @Resource
-    private CustomCacheConfig customCacheConfig;
+
+    public RedisCacheServiceImpl(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+        this.serializeService = new SerializeServiceImpl();
+    }
 
     /**
      * 用于存储每个Cache的key
@@ -40,40 +33,6 @@ public class CacheServiceImpl implements CacheService {
      * 用于存储每个CacheKey 对应的 CacheName，使用一个Hash存储，下面就是Hash的key
      */
     public static final String CACHE_NAME_OF_KEY_HASH_KEY = "C7264226X_CACHE_NAME_OF_KEY_HASH";
-
-    @Override
-    public String generateCacheKey(String cacheName, String methodName, Object... params) {
-        StringBuilder keyBuilder = new StringBuilder(cacheName).append("::").append(methodName).append("-v1_0");
-        if (params == null || params.length <= 0) {
-            log.debug("获取缓存key，方法 {} 的参数体为空！", methodName);
-            return keyBuilder.toString();
-        }
-        keyBuilder.append("-");
-        Integer maxParamNum = customCacheConfig.getMaxParamNum();
-        if (this.paramsTooLong(params, maxParamNum)) {
-            log.info("获取缓存key，方法 {} 的参数个数大于【{}】个 或存在集合，采用MD5摘要~", methodName, maxParamNum);
-            String paramMd5 = DigestUtils.md5DigestAsHex(Arrays.toString(params).getBytes());
-            keyBuilder.append(paramMd5);
-            return keyBuilder.toString();
-        }
-        for (Object param : params) {
-            String paramStr = String.valueOf(param);
-            keyBuilder.append(paramStr.replace(":", "-")).append("_");
-        }
-        return keyBuilder.toString();
-    }
-
-    private boolean paramsTooLong(Object[] params, Integer maxParamNum) {
-        if (params.length > maxParamNum) {
-            return true;
-        }
-        for (Object param : params) {
-            if (param instanceof Iterable || param instanceof Map || param.getClass().isArray()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     @Override
     public Object getFromRedis(String key) {
@@ -111,12 +70,10 @@ public class CacheServiceImpl implements CacheService {
             String keySetKey = CACHE_KEY_SET_PREFIX + cacheName;
             redisTemplate.opsForSet().remove(keySetKey, key);
         }
-        // FIXME 公司的Redis支持这个批量操作么？待测
         redisTemplate.opsForHash().delete(CACHE_NAME_OF_KEY_HASH_KEY, keys);
     }
 
     @Override
-    @SuppressWarnings("ConfusingArgumentToVarargsMethod")
     public void deleteByCacheName(String cacheName) {
         String keySetKey = CACHE_KEY_SET_PREFIX + cacheName;
         Set<String> keySet = redisTemplate.opsForSet().members(keySetKey);
@@ -126,7 +83,6 @@ public class CacheServiceImpl implements CacheService {
         }
         keySet.forEach(k -> redisTemplate.delete(k));
         redisTemplate.delete(keySetKey);
-        // FIXME 公司的Redis支持这个批量操作么？待测
-        redisTemplate.opsForHash().delete(CACHE_NAME_OF_KEY_HASH_KEY, keySet.toArray(new String[0]));
+        redisTemplate.opsForHash().delete(CACHE_NAME_OF_KEY_HASH_KEY, keySet.toArray(new Object[0]));
     }
 }

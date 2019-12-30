@@ -1,10 +1,10 @@
-package cx.twinkle.rediscache.service;
+package cx.twinkle.rediscache.cache;
 
 import java.util.Map;
 
 /**
  * @author twinkle
- * @version 2019/12/27 15:04
+ * @version 2019/12/30 18:58
  */
 public interface SerializeService {
     /**

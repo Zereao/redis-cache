@@ -1,4 +1,4 @@
-package cx.twinkle.rediscache.service.task;
+package cx.twinkle.rediscache.cache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class CacheHolder {
         }
         Set<String> resultSet = new HashSet<>(RUNTIME_CACHE_NAME_SET);
         RUNTIME_CACHE_NAME_SET.clear();
-        log.info("CacheHolder清理完毕！");
+        log.info("CacheHolder中的数据清理完毕！");
         return resultSet;
     }
 }

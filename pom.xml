@@ -12,6 +12,7 @@
     <modules>
         <module>redis-cache-spring-boot-starter-autoconfigure</module>
         <module>redis-cache-spring-boot-starter</module>
+        <module>redis-cache-core</module>
     </modules>
 
 </project>
