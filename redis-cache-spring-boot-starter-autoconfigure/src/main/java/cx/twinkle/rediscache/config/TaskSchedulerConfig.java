@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
  * @author twinkle
@@ -14,9 +14,9 @@ import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 @Configuration
 public class TaskSchedulerConfig {
     @Bean
-    @ConditionalOnMissingBean(ConcurrentTaskScheduler.class)
+    @ConditionalOnMissingBean(ThreadPoolTaskScheduler.class)
     public TaskScheduler taskScheduler() {
-        return new ConcurrentTaskScheduler();
+        return new ThreadPoolTaskScheduler();
     }
 
     @Bean

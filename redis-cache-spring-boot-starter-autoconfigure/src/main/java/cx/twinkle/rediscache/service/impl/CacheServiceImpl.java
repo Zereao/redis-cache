@@ -108,7 +108,7 @@ public class CacheServiceImpl implements CacheService {
         String keySetKey = CACHE_KEY_SET_PREFIX + cacheName;
         Set<String> keySet = redisTemplate.opsForSet().members(keySetKey);
         if (CollectionUtils.isEmpty(keySet)) {
-            log.warn("缓存名 {} 下没有任何缓存Key！", cacheName);
+            log.info("缓存名 {} 下没有任何缓存Key！没有任何缓存被删除！", cacheName);
             return;
         }
         keySet.forEach(k -> redisTemplate.delete(k));
