@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -67,7 +68,7 @@ public class CacheServiceImpl implements CacheService {
             return true;
         }
         for (Object param : params) {
-            if (param instanceof Iterable || param.getClass().isArray()) {
+            if (param instanceof Iterable || param instanceof Map || param.getClass().isArray()) {
                 return true;
             }
         }
