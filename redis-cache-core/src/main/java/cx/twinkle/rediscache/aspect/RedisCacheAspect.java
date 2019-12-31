@@ -39,37 +39,6 @@ public class RedisCacheAspect {
     }
 
     /**
-     * 用于处理 缓存写入、读取
-     */
-    @Around("@annotation(cx.twinkle.rediscache.annotation.Cacheable)")
-    public Object cacheable(ProceedingJoinPoint pjp) throws Throwable {
-        Object[] params = pjp.getArgs();
-        Method targetMethod = ((MethodSignature) pjp.getSignature()).getMethod();
-        MethodCacheInfo cacheInfo = operator.getCacheInfoWhenRead(targetMethod, params);
-        String cacheKey = cacheInfo.getCacheKey(),
-                methodName = cacheInfo.getMethodName(),
-                cacheName = cacheInfo.getCacheName();
-        Object result = cacheService.getFromRedis(cacheKey);
-        if (result != null) {
-            log.info("方法 {} 通过Redis缓存获取到结果：\n{}", methodName,
-                    operator.buildLogInfo(methodName, cacheName, cacheKey, params));
-            return result;
-        }
-        // 如果没有读取到缓存，则执行方法，并且将结果集写入Redis
-        Object resultAfterRun = pjp.proceed();
-        // 异步写入Redis
-        operator.execute(() -> {
-            if (operator.isNullResult(resultAfterRun)) {
-                return;
-            }
-            cacheService.insert2Redis(cacheKey, resultAfterRun, cacheInfo.getExpireTime(), cacheName);
-            log.info("方法 {} 结果集已写入Redis：\n{}", methodName,
-                    operator.buildLogInfo(methodName, cacheName, cacheKey, params));
-        });
-        return resultAfterRun;
-    }
-
-    /**
      * 用于处理 缓存 过期
      */
     @Before("@annotation(cx.twinkle.rediscache.annotation.CacheEvict)")
@@ -91,5 +60,56 @@ public class RedisCacheAspect {
         String[] keys = keyList.toArray(new String[0]);
         cacheService.deleteByKey(keys);
         log.info("KEY = {} 对应的缓存删除成功！", keyList);
+    }
+
+    /**
+     * 用于处理 缓存写入、读取
+     */
+    @Around("@annotation(cx.twinkle.rediscache.annotation.Cacheable)")
+    public Object cacheable(ProceedingJoinPoint pjp) throws Throwable {
+        Object[] params = pjp.getArgs();
+        Method targetMethod = ((MethodSignature) pjp.getSignature()).getMethod();
+        MethodCacheInfo cacheInfo = operator.getCacheInfoWhenRead(targetMethod, params);
+        String cacheKey = cacheInfo.getCacheKey(),
+                methodName = cacheInfo.getMethodName(),
+                cacheName = cacheInfo.getCacheName();
+        Object result = cacheService.getFromRedis(cacheKey);
+        if (result != null) {
+            log.info("方法 {} 通过Redis缓存获取到结果：\n{}", methodName,
+                    operator.buildLogInfo(methodName, cacheName, cacheKey, params));
+            return result;
+        }
+        // 如果没有读取到缓存，则执行方法，并且将结果集写入Redis
+        Object resultAfterRun = pjp.proceed();
+        if (operator.isNullResult(resultAfterRun)) {
+            return resultAfterRun;
+        }
+        // 异步写入Redis
+        operator.execute(() -> {
+            cacheService.insert2Redis(cacheKey, resultAfterRun, cacheInfo.getExpireTime(), cacheName);
+            log.info("方法 {} 结果集已写入Redis：\n{}", methodName,
+                    operator.buildLogInfo(methodName, cacheName, cacheKey, params));
+        });
+        return resultAfterRun;
+    }
+
+    @Around("@annotation(cx.twinkle.rediscache.annotation.CachePut)")
+    public Object cachePut(ProceedingJoinPoint pjp) throws Throwable {
+        Object result = pjp.proceed();
+        if (operator.isNullResult(result)) {
+            return null;
+        }
+        Object[] params = pjp.getArgs();
+        Method targetMethod = ((MethodSignature) pjp.getSignature()).getMethod();
+        MethodCacheInfo cacheInfo = operator.getCacheInfoWhenPut(targetMethod, params);
+        String cacheKey = cacheInfo.getCacheKey(),
+                methodName = cacheInfo.getMethodName(),
+                cacheName = cacheInfo.getCacheName();
+        operator.execute(() -> {
+            cacheService.insert2Redis(cacheKey, result, cacheInfo.getExpireTime(), cacheName);
+            log.info("方法 {} 结果集已写入Redis：\n{}", methodName,
+                    operator.buildLogInfo(methodName, cacheName, cacheKey, params));
+        });
+        return result;
     }
 }

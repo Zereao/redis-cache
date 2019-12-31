@@ -1,7 +1,5 @@
 package cx.twinkle.rediscache.cache;
 
-import java.util.Map;
-
 /**
  * @author twinkle
  * @version 2019/12/30 18:58
@@ -15,14 +13,6 @@ public interface SerializeService {
      * @return 得到的字符串
      */
     String serialize(Object obj);
-
-    /**
-     * 序列化Map对象，自己实现的Map序列化协议
-     *
-     * @param objMap 需要序列化的Map对象
-     * @return 序列化后的字符串
-     */
-    String serializeMap(Map<?, ?> objMap);
 
     /**
      * 反序列化

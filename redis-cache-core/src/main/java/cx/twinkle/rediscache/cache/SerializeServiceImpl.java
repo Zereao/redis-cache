@@ -1,13 +1,17 @@
 package cx.twinkle.rediscache.cache;
 
+import cx.twinkle.rediscache.utils.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,26 +37,22 @@ public class SerializeServiceImpl implements SerializeService {
 
     @Override
     public String serialize(Object obj) {
-        if (obj instanceof Map<?, ?>) {
-            Map<?, ?> objMap = (Map<?, ?>) obj;
-            return CollectionUtils.isEmpty(objMap) ? "" : this.serializeMap(objMap);
+        if (obj instanceof Serializable) {
+            byte[] serializedBytes = jdkSerializer.serialize(obj);
+            return Arrays.toString(serializedBytes);
         }
-        if (KEY_SET_CLASS.isInstance(obj)) {
-            obj = new HashSet<>((Set<?>) obj);
+        if (!ReflectionUtils.hasDefaultConstructor(obj)) {
+            if (KEY_SET_CLASS.isInstance(obj)) {
+                obj = new HashSet<>((Set<?>) obj);
+            } else {
+                log.error("存在一个结果无法序列化！resultObj = {}", obj);
+                return "";
+            }
         }
         byte[] serializedBytes = jacksonSerializer.serialize(obj);
         return (serializedBytes == null || serializedBytes.length == 0) ? "" : new String(serializedBytes);
     }
 
-    @Override
-    public String serializeMap(Map<?, ?> objMap) {
-        byte[] serializedBytes = jdkSerializer.serialize(objMap);
-        if (serializedBytes == null || serializedBytes.length <= 0) {
-            log.warn("存在一个非空的Map = {}使用JDK序列化后的结果byte数组为空！", objMap);
-            return "";
-        }
-        return Arrays.toString(serializedBytes);
-    }
 
     @Override
     public Object deserialize(String str) {
