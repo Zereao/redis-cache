@@ -1,6 +1,7 @@
 package cx.twinkle.rediscache.aspect;
 
 import cx.twinkle.rediscache.annotation.CacheEvict;
+import cx.twinkle.rediscache.annotation.CachePut;
 import cx.twinkle.rediscache.annotation.Cacheable;
 import cx.twinkle.rediscache.annotation.RedisCache;
 import cx.twinkle.rediscache.cache.SpelParser;
@@ -37,6 +38,19 @@ public class CacheInfoOperator {
         this.spelParser = new SpelParser(beanFactory);
     }
 
+    /**
+     * 根据 缓存名、方法名，参数，生成 缓存的 key
+     * <p>
+     * Key 的格式为：缓存名::方法名-参数toString()
+     * 如果参数个数大于5，或者参数包含集合对象，则使用MD5算法对 参数的toString() 进行处理
+     *
+     * @param cacheName  缓存名
+     * @param methodName 方法名
+     * @param params     方法的参数，本身是一个 可变参数
+     * @return 缓存的key
+     * @apiNote 为什么不适用 Hash 结构存储同一个缓存名下面的 key-value对？
+     * ------>  因为 Hash 结构的数据不支持 自动过期。所以就采用了 :: 分级
+     */
     public String generateCacheKey(String cacheName, String methodName, Object... params) {
         StringBuilder keyBuilder = new StringBuilder(cacheName).append("::").append(methodName).append("-v1_0");
         if (params == null || params.length <= 0) {
@@ -77,15 +91,24 @@ public class CacheInfoOperator {
     }
 
     MethodCacheInfo getCacheInfoWhenRead(Method method, Object... params) {
+        return this.getCacheInfo(method, Cacheable.class, Cacheable::cache, Cacheable::key, Cacheable::expire, params);
+    }
+
+    MethodCacheInfo getCacheInfoWhenPut(Method method, Object... params) {
+        return this.getCacheInfo(method, CachePut.class, CachePut::cache, CachePut::key, CachePut::expire, params);
+    }
+
+    private <T extends Annotation> MethodCacheInfo getCacheInfo(Method method, Class<T> cls, Function<T, String> f1,
+                                                                Function<T, String> f2, Function<T, String> f3, Object... params) {
         String methodName = method.getName();
-        String cacheName = this.getValue(method, Cacheable.class, Cacheable::cache, RedisCache::cache);
+        String cacheName = this.getValue(method, cls, f1, RedisCache::cache);
         if (!StringUtils.isEmpty(cacheName)) {
             log.debug("从方法 {} 上解析到需要使用缓存名称：{}", methodName, cacheName);
         } else {
             log.debug("从方法 {} 中解析未解析到 缓存名！使用默认缓存名生成策略 - MD5摘要！", methodName);
             cacheName = DigestUtils.md5DigestAsHex(method.toGenericString().getBytes());
         }
-        String cacheKey = this.getValue(method, Cacheable.class, Cacheable::key, null);
+        String cacheKey = this.getValue(method, cls, f2, null);
         if (!StringUtils.isEmpty(cacheKey)) {
             log.debug("从方法 {} 上解析到需要使用缓存Key：{}", methodName, cacheKey);
         } else {
@@ -93,7 +116,7 @@ public class CacheInfoOperator {
             cacheKey = this.generateCacheKey(cacheName, methodName, params);
         }
         Duration expire = Duration.ZERO;
-        String expireTime = this.getValue(method, Cacheable.class, Cacheable::expire, RedisCache::expire);
+        String expireTime = this.getValue(method, cls, f3, RedisCache::expire);
         if (!StringUtils.isEmpty(expireTime)) {
             log.debug("从方法 {} 上解析到该缓存的过期时间：{}", methodName, expireTime);
             expire = DurationUtils.parseDuration(expireTime);
@@ -172,11 +195,10 @@ public class CacheInfoOperator {
      * @param result 结果
      * @return true OR false
      */
-    @SuppressWarnings("rawtypes")
     boolean isNullResult(Object result) {
         return StringUtils.isEmpty(result)
-                || (result instanceof Collection && CollectionUtils.isEmpty((Collection) result))
-                || (result instanceof Map && CollectionUtils.isEmpty((Map) result));
+                || (result instanceof Collection && CollectionUtils.isEmpty((Collection<?>) result))
+                || (result instanceof Map && CollectionUtils.isEmpty((Map<?, ?>) result));
     }
 
     /**
